@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="LineChart">
+        <attr name="StrokeWidth" format="dimension"/>
+        <attr name="FontSize" format="dimension"/>
+        <attr name="PointRadius" format="dimension"/>
+        <attr name="DarkColor" format="color"/>
+        <attr name="LightColor" format="color"/>
+        <attr name="DateTextColor" format="color"/>
+        <attr name="ShapeColor" format="color"/>
+    </declare-styleable>
+
+</resources>
