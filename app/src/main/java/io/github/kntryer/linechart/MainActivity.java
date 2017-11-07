@@ -17,9 +17,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvMonth;
 
     private String[] mDayItems = new String[]{"31日", "1日", "2日", "3日", "4日", "5日", "6日"};
-    private int[] mDayPoints = new int[]{0, 2, 1, 4, 0, 1, -1};
+    private int[] mDayPoints = new int[]{0, 2, 7, 4, 0, 1, -1};
     private String[] mWeekItems = new String[]{"日", "一", "二", "三", "四", "五", "六"};
-    private int[] mWeekPoints = new int[]{0, 2, 1, 4, 0, 1, -1};
+    private int[] mWeekPoints = new int[]{7, 2, 1, 4, 0, 1, -1};
     private String[] mMonthItems = new String[]{"5月", "6月", "7月", "8月", "9月", "10月", "11月"};
     private int[] mMonthPoints = new int[]{0, 2, 1, 0, 0, 0, 8};
     private List<LineChartData> dataList1 = new ArrayList<>();
@@ -69,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void weekClick(View view){
+
         resetTextColor();
         tvWeek.setTextColor(getResources().getColor(R.color.colorPrimary));
         dataList2.clear();

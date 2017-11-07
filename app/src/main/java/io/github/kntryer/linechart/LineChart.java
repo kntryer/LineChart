@@ -1,5 +1,8 @@
 package io.github.kntryer.linechart;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -7,9 +10,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -67,7 +73,6 @@ public class LineChart extends View {
         } finally {
             typedArray.recycle();
         }
-
         initPaint();
     }
 
@@ -115,6 +120,57 @@ public class LineChart extends View {
         setMeasuredDimension(mWidth, mHeight);
     }
 
+    private float mAnimatedValue = 0f;
+
+    protected void OnAnimationUpdate(ValueAnimator valueAnimator) {
+        mAnimatedValue = (float) valueAnimator.getAnimatedValue();
+        invalidate();
+    }
+
+    public ValueAnimator valueAnimator;
+
+    private ValueAnimator startViewAnim(float startF, final float endF, long time) {
+        valueAnimator = ValueAnimator.ofFloat(startF, endF);
+        valueAnimator.setDuration(time);
+        valueAnimator.setInterpolator(new LinearInterpolator());
+
+//        valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
+
+//        valueAnimator.setRepeatMode(ValueAnimator.RESTART);
+
+        valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
+
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                OnAnimationUpdate(valueAnimator);
+
+            }
+        });
+        valueAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+
+            }
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                super.onAnimationRepeat(animation);
+            }
+        });
+        if (!valueAnimator.isRunning()) {
+            valueAnimator.start();
+        }
+
+        return valueAnimator;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
 
@@ -138,11 +194,14 @@ public class LineChart extends View {
         int[] xPoints = new int[mLength];//x轴的刻度集合
         int[] yPoints = new int[mLength];//y轴的刻度集合
 
+        canvas.save();
+
         for (int i = 0; i < mLength; i++) {
 
             //获取点的坐标
             xPoints[i] = (int) ((i + 0.5) * (mWidth / mLength));
-            yPoints[i] = (int) ((max - (mPoints[i] == -1 ? 0 : mPoints[i])) * ((mHeight - mLength * mFontSize) / max) + 4 * mFontSize);
+            //todo
+            yPoints[i] = (int) ((max - (mPoints[i] == -1 ? 0 : mPoints[i]) * mAnimatedValue) * ((mHeight - mLength * mFontSize) / max) + 4 * mFontSize);
 
             if (i > 0) {
                 //画一个实心梯形,阴影部分
@@ -171,7 +230,11 @@ public class LineChart extends View {
                 canvas.drawLine(xPoints[i - 1], yPoints[i - 1], xPoints[i], yPoints[i], mLinePaint);
             }
             //画点的数值
-            canvas.drawText(String.valueOf(mPoints[i]).equals("-1") ? " " : String.valueOf(mPoints[i]), xPoints[i] - mFontSize / 4, yPoints[i] - mFontSize, mPointPaint);
+            //todo
+
+            canvas.drawText(String.valueOf(mPoints[i]).equals("-1") ? " " : new BigDecimal(String.valueOf(mPoints[i] * mAnimatedValue)).setScale(0, BigDecimal.ROUND_HALF_UP) + ""
+//                            String.valueOf(mPoints[i])
+                    , xPoints[i] - mFontSize / 4, yPoints[i] - mFontSize, mPointPaint);
         }
 
         for (int i = 0; i < mLength; i++) {
@@ -185,9 +248,12 @@ public class LineChart extends View {
             //画点
             canvas.drawCircle(xPoints[i], yPoints[i], mPointRadius, mPointPaint);
         }
+
+        canvas.restore();
     }
 
     public void setData(List<LineChartData> dataList) {
+
         mLength = dataList.size();
         if (mLength > 0) {
             mXItems = new String[mLength];
@@ -197,6 +263,7 @@ public class LineChart extends View {
                 mXItems[i] = dataList.get(i).getItem();
             }
         }
+        startViewAnim(0f, 1f, 1000);
         invalidate();
     }
 }
