@@ -19,6 +19,3 @@ a simple line chart for android
 
 <img src="linechart.png"/>
 
-#### Contact me
-
-
