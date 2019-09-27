@@ -31,8 +31,7 @@ name | 价格 |  数量
 草莓 | $1 | 7 |
 
 <figure class="half">
-    <img src="linechart.gif">
-    <img src="linechart.png">
+    <img src="linechart.gif"><img src="linechart.png">
 </figure>
 
 
