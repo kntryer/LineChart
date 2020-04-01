@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/LineChart.iml" filepath="$PROJECT_DIR$/LineChart.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/LineChart-app.iml" filepath="$PROJECT_DIR$/app/LineChart-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android-LineChart.iml" filepath="$PROJECT_DIR$/android-LineChart.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

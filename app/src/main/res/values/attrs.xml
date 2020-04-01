@@ -9,6 +9,9 @@
         <attr name="LightColor" format="color"/>
         <attr name="DateTextColor" format="color"/>
         <attr name="ShapeColor" format="color"/>
+        <attr name="GradientDarkColor" format="color"/>
+        <attr name="GradientLightColor" format="color"/>
+        <attr name="IsShowGradient" format="boolean"/>
     </declare-styleable>
 
 </resources>

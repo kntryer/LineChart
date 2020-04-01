@@ -7,12 +7,15 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 
 import java.math.BigDecimal;
@@ -34,6 +37,10 @@ public class LineChart extends View {
     private int mDarkColor = Color.parseColor("#5b7fdf");//点、线的颜色(深色)
     private int mLightColor = Color.parseColor("#d5d8f7");//点、线的颜色(浅色)
     private int mShapeColor = Color.parseColor("#f3f6fd");//阴影的颜色
+
+    private int mGradientLightColor = Color.parseColor("#d5d8f7");//渐变浅色
+    private int mGradientDarkColor = Color.parseColor("#5b7fdf");//渐变深色
+    private boolean mIsShowGradient = false;//是否显示渐变
 
     private String[] mXItems;//X轴的文字
     private int[] mPoints;//点的数组，-1表示该日还没到
@@ -70,6 +77,9 @@ public class LineChart extends View {
                     (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mStrokeWidth, mContext.getResources().getDisplayMetrics()));
             mPointRadius = typedArray.getDimensionPixelSize(R.styleable.LineChart_PointRadius,
                     (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mPointRadius, mContext.getResources().getDisplayMetrics()));
+            mGradientLightColor = typedArray.getColor(R.styleable.LineChart_GradientLightColor, mGradientLightColor);
+            mGradientDarkColor = typedArray.getColor(R.styleable.LineChart_GradientDarkColor, mGradientDarkColor);
+            mIsShowGradient = typedArray.getBoolean(R.styleable.LineChart_IsShowGradient, mIsShowGradient);
         } finally {
             typedArray.recycle();
         }
@@ -171,6 +181,15 @@ public class LineChart extends View {
         return valueAnimator;
     }
 
+    // 阴影部分梯形路径
+    Path path = new Path();
+    // 渐变
+    Shader mShader = new LinearGradient(0, 0, 0, mHeight,
+            new int[]{mGradientLightColor, mGradientDarkColor}, null, Shader.TileMode.CLAMP);
+
+    int[] xPoints = new int[mLength];//x轴的刻度集合
+    int[] yPoints = new int[mLength];//y轴的刻度集合
+
     @Override
     protected void onDraw(Canvas canvas) {
 
@@ -178,6 +197,8 @@ public class LineChart extends View {
             mXItems = new String[]{"日", "一", "二", "三", "四", "五", "六"};
             mPoints = new int[]{0, -1, -1, -1, -1, -1, -1};
             mLength = mXItems.length;
+            xPoints = new int[mLength];
+            yPoints = new int[mLength];
         }
 
         //最大比例
@@ -191,69 +212,59 @@ public class LineChart extends View {
         int xOrigin = (int) (0.5 * (mWidth / mLength) - mFontSize / 2);
         int yOrigin = (int) (max * ((mHeight - mLength * mFontSize) / max) + 4 * mFontSize);
 
-        int[] xPoints = new int[mLength];//x轴的刻度集合
-        int[] yPoints = new int[mLength];//y轴的刻度集合
-
         canvas.save();
 
         for (int i = 0; i < mLength; i++) {
 
             //获取点的坐标
             xPoints[i] = (int) ((i + 0.5) * (mWidth / mLength));
-            //todo
             yPoints[i] = (int) ((max - (mPoints[i] == -1 ? 0 : mPoints[i]) * mAnimatedValue) * ((mHeight - mLength * mFontSize) / max) + 4 * mFontSize);
 
             if (i > 0) {
                 //画一个实心梯形,阴影部分
-                Path path = new Path();
                 path.moveTo(xPoints[i - 1], yOrigin + mPointRadius / 2);
                 path.lineTo(xPoints[i - 1], yPoints[i - 1]);
                 path.lineTo(xPoints[i], yPoints[i]);
                 path.lineTo(xPoints[i], yOrigin + mPointRadius / 2);
                 path.close();
+
+                if (mIsShowGradient) {
+                    //添加线性渐变
+                    mShapePaint.setShader(mShader);
+                }
                 canvas.drawPath(path, mShapePaint);
+                path.reset();
             }
             //画出日期
             canvas.drawText(mXItems[i], (int) ((i + 0.5) * mWidth / mLength) - mFontSize / 2, mHeight - mFontSize, mDatePaint);
         }
 
         for (int i = 0; i < mLength; i++) {
-            if (mPoints[i] == -1) {
-                mLinePaint.setColor(mLightColor);
-                mPointPaint.setColor(mLightColor);
-            } else {
-                mLinePaint.setColor(mDarkColor);
-                mPointPaint.setColor(mDarkColor);
-            }
+            mLinePaint.setColor(mPoints[i] == -1 ? mLightColor : mDarkColor);
+            mPointPaint.setColor(mPoints[i] == -1 ? mLightColor : mDarkColor);
             if (i > 0) {
                 //画连线
                 canvas.drawLine(xPoints[i - 1], yPoints[i - 1], xPoints[i], yPoints[i], mLinePaint);
             }
             //画点的数值
-            //todo
-
-            canvas.drawText(String.valueOf(mPoints[i]).equals("-1") ? " " : new BigDecimal(String.valueOf(mPoints[i] * mAnimatedValue)).setScale(0, BigDecimal.ROUND_HALF_UP) + ""
-//                            String.valueOf(mPoints[i])
+            canvas.drawText(mPoints[i] == -1 ? " " : String.valueOf((int) Math.floor(mPoints[i] * mAnimatedValue))
                     , xPoints[i] - mFontSize / 4, yPoints[i] - mFontSize, mPointPaint);
         }
 
+        // 顶点
         for (int i = 0; i < mLength; i++) {
-            if (mPoints[i] == -1) {
-                mLinePaint.setColor(mLightColor);
-                mPointPaint.setColor(mLightColor);
-            } else {
-                mLinePaint.setColor(mDarkColor);
-                mPointPaint.setColor(mDarkColor);
-            }
-            //画点
-            canvas.drawCircle(xPoints[i], yPoints[i], mPointRadius, mPointPaint);
+            mPointPaint.setColor(mPoints[i] == -1 ? mLightColor : mDarkColor);
+            mLinePaint.setColor(Color.parseColor("#FFFFFF"));
+            //画大点
+            canvas.drawCircle(xPoints[i], yPoints[i], mPointRadius + 2, mPointPaint);
+            //画小点
+            canvas.drawCircle(xPoints[i], yPoints[i], mPointRadius, mLinePaint);
         }
 
         canvas.restore();
     }
 
     public void setData(List<LineChartData> dataList) {
-
         mLength = dataList.size();
         if (mLength > 0) {
             mXItems = new String[mLength];
@@ -264,6 +275,40 @@ public class LineChart extends View {
             }
         }
         startViewAnim(0f, 1f, 1000);
-        invalidate();
     }
+
+    //设置是否显示渐变
+    public LineChart setIsShowGradient(boolean mIsShowGradient) {
+        this.mIsShowGradient = mIsShowGradient;
+        return this;
+    }
+
+    //设置渐变颜色
+    public LineChart setGradientColor(String mLightColor, String mDarkColor) {
+        this.mGradientLightColor = Color.parseColor(mLightColor);
+        this.mGradientDarkColor = Color.parseColor(mDarkColor);
+        mShader = new LinearGradient(0, 0, 0, mHeight,
+                new int[]{mGradientLightColor, mGradientDarkColor}, null, Shader.TileMode.CLAMP);
+        return this;
+    }
+
+    //设置 view 高度
+    public LineChart setHigh(int mHeight) {
+        mHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, mHeight, mContext.getResources().getDisplayMetrics());
+        ViewGroup.LayoutParams layoutParams = this.getLayoutParams();
+        if (layoutParams.height != mHeight) {
+            layoutParams.height = mHeight;
+            this.setLayoutParams(layoutParams);
+        }
+        this.mHeight = mHeight;
+        mShader = new LinearGradient(0, 0, 0, mHeight,
+                new int[]{mGradientLightColor, mGradientDarkColor}, null, Shader.TileMode.CLAMP);
+        return this;
+    }
+
+    //刷新view
+    public void refreshView() {
+        startViewAnim(0f, 1f, 1000);
+    }
+
 }
