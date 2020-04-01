@@ -11,7 +11,7 @@ a simple line chart for android
 
 #### Preview
 
-<img src="linechart_1_2.png"/>
+<img src="linechart_1_2.png" height="620" width="480"/>
 
 ### v 1.1 (2017-11-07)
 
